@@ -21,10 +21,10 @@ Then you watch it once and check anything it flags.
 ## The Steps Broken Down
 
 ### Step 1: Start The Edit
-Drag the recording into Claude Code:
+In the app: on **Edit a recording**, drop the file on the frame, choose **Long video only** (or **Long video + shorts**) and click **Make my videos**. Or in Claude Code, drag the recording in and say:
 > "Edit this."
 
-A 10-minute video takes about 6–8 minutes on an M-series Mac. Claude tells you when it's done.
+A 10-minute recording takes about 6–8 minutes for the long video alone, and about 15–20 minutes with shorts, on an M-series Mac. The card (or Claude) tells you when it's done.
 
 ### Step 2: Read The Result
 Claude reports:

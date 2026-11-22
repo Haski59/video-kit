@@ -32,7 +32,7 @@ The kit cuts dead air, filler words and retakes by listening to the audio and fi
 - Avoid saying "as I said earlier" in parts you want as shorts: each short has to stand alone.
 
 ### Step 5: Hand Over The File
-Copy the file to your Mac (AirDrop, cable or Drive), put it in `video-kit/projects/<video-name>/`, then drag it into Claude Code and say "edit this".
+Copy the file to your Mac (AirDrop, cable or Drive). Open Video Kit, drag the file onto the frame on **Edit a recording** and click **Make my videos** (SOP 03). Prefer Claude Code? Drag it into the `Video Kit` folder's Claude Code session and say "edit this".
 
 ### Practical Example
 You stumble on "the three things you need to get clients is…". Stop. Pause. Say "The three things you need to get clients are…" cleanly. The kit removes the first attempt. If the two takes differ a lot, it leaves both in and tells you the second to check.
