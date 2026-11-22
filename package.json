@@ -1,0 +1,17 @@
+{
+  "name": "cc-video-kit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plug-and-play long-form and short-form video editing for talking-head creators, driven from Claude Code.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "bin": { "kit": "engine/cli.js" },
+  "scripts": {
+    "kit": "node engine/cli.js",
+    "test": "node --test tests/*.test.js",
+    "test:integration": "node --test --test-concurrency=1 tests/integration/*.test.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "24.40.0"
+  }
+}

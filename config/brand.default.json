@@ -1,0 +1,13 @@
+{
+  "_comment": "Kit default look. /setup writes member/brand.json with the member's own colours and font; that file wins when it exists. accent = caption emphasis + graphic highlight colour. fontFamily must be installed on the Mac (check with: fc-list : family).",
+  "name": "My Channel",
+  "black": "#0a0a0c",
+  "panel": "#111114",
+  "accent": "#facc15",
+  "text": "#f5f5f7",
+  "muted": "#9a9aa2",
+  "fontFamily": "Avenir Next",
+  "captionFont": "Avenir Next Heavy",
+  "cssFont": "'Avenir Next','Avenir',-apple-system,'Segoe UI',sans-serif",
+  "currency": "$"
+}

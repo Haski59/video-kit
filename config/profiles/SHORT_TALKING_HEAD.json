@@ -1,0 +1,224 @@
+{
+  "_doc": [
+    "Vertical short (Reels, TikTok, Shorts) \u2014 one person talking to camera.",
+    "Every editing behaviour the planner may use is declared here; the planner selects from these, it never invents a style.",
+    "Caption font and accent colour come from member/brand.json (written by /setup). Change a value here \u2192 bump `version`."
+  ],
+  "id": "SHORT_TALKING_HEAD",
+  "version": "1.0.0",
+  "status": "active",
+  "types": [
+    "reel",
+    "ad"
+  ],
+  "output": {
+    "width": 1080,
+    "height": 1920,
+    "fps": "source",
+    "fpsAllowed": [
+      24,
+      25,
+      30,
+      50,
+      60
+    ],
+    "fpsFallback": 30,
+    "videoCodec": "libx264",
+    "x264Profile": "high",
+    "crf": 18,
+    "preset": "medium",
+    "maxrate": "16M",
+    "bufsize": "32M",
+    "pixFmt": "yuv420p",
+    "colour": "bt709",
+    "audioCodec": "aac",
+    "audioBitrate": "192k",
+    "audioRate": 48000,
+    "audioChannels": 2
+  },
+  "pacing": {
+    "_doc": "Dead air between words longer than maxGapSec is SHORTENED to keepGapSec, never closed \u2014 speech with no breathing room is exhausting. Normal breaths under maxGapSec are untouched.",
+    "maxGapSec": 0.6,
+    "keepGapSec": 0.25,
+    "padSec": 0.06,
+    "edgeGapSec": 0.2,
+    "fillers": [
+      "um",
+      "uh",
+      "erm",
+      "uhh",
+      "umm",
+      "ah",
+      "er",
+      "hmm",
+      "mm"
+    ],
+    "audibleVetoFraction": 0.35,
+    "maxRemovedFraction": 0.6,
+    "suspectScoreMax": 0.25,
+    "suspectMaxAudibleFraction": 0.5
+  },
+  "silence": {
+    "offsetDb": 25,
+    "minDb": -60,
+    "maxDb": -30,
+    "minSilenceSec": 0.2
+  },
+  "retakes": {
+    "_doc": "Retakes are always identified. 'guarded' auto-applies only explicit restart markers and repeats that pass every guard; anything else stays proposed and sends the job to NEEDS_REVIEW.",
+    "autoApply": "guarded",
+    "minRun": 4,
+    "lookaheadSec": 12,
+    "guard": {
+      "minScore": 0.4,
+      "minAudibleFraction": 0.6,
+      "durationRatio": [
+        0.6,
+        1.6
+      ],
+      "maxGapBetweenTakesSec": 4
+    }
+  },
+  "reframe": {
+    "_doc": "face_crop: full-height 9:16 window centred on the main face, repositioned only at cuts (a hard cut hides the move). letterbox: whole frame in a band. none: scale/pad only.",
+    "mode": "face_crop",
+    "sampleFps": 3,
+    "minShiftFrac": 0.03,
+    "unstableSpreadFrac": 0.08,
+    "alreadyVerticalAspect": 0.6,
+    "faceAnchorYFrac": 0.42
+  },
+  "captions": {
+    "style": "KIT_CAPTION_V1",
+    "_fontDoc": "Use a named upright family (e.g. \"Avenir Next Heavy\"). A family + bold flag can make libass pick an italic face; render.js proves the face is upright before every render.",
+    "font": "Avenir Next Heavy",
+    "bold": false,
+    "fontSize": 62,
+    "charWidthEm": 0.62,
+    "primaryColour": "#FFFFFF",
+    "emphasisColour": "#1DB954",
+    "outlineColour": "#000000",
+    "outline": 5,
+    "shadow": 2,
+    "minWords": 2,
+    "maxWords": 5,
+    "maxCharsPerLine": 22,
+    "maxLines": 2,
+    "breakOnGapSec": 0.35,
+    "maxCueSec": 2.6,
+    "minCueSec": 0.4,
+    "tailHoldSec": 0.15,
+    "fadeInMs": 60,
+    "maxEmphasisPerCue": 1,
+    "uppercase": false,
+    "gapBelowFacePx": 48,
+    "preferredCentreYFrac": 0.64,
+    "maxWordsPerSec": 5.5,
+    "burn": true
+  },
+  "punchIns": {
+    "_doc": "Only around genuine emphasis. cut = instant reframe at a join (applied per segment). ease = smooth zoom (smoothstep) on the output timeline.",
+    "presets": {
+      "PUNCH_CUT_106": {
+        "kind": "cut",
+        "scale": 1.06
+      },
+      "PUNCH_CUT_108": {
+        "kind": "cut",
+        "scale": 1.08
+      },
+      "PUNCH_EASE_106": {
+        "kind": "ease",
+        "scale": 1.06,
+        "rampSec": 0.5
+      },
+      "PUNCH_EASE_108": {
+        "kind": "ease",
+        "scale": 1.08,
+        "rampSec": 0.45
+      },
+      "PUNCH_EASE_110": {
+        "kind": "ease",
+        "scale": 1.1,
+        "rampSec": 0.4
+      }
+    },
+    "maxScale": 1.1,
+    "minSpacingSec": 5,
+    "maxPer30s": 3,
+    "minHoldSec": 0.8,
+    "maxHoldSec": 4.0,
+    "maxCutHoldSec": 10.0,
+    "easeHoldSec": 1.0,
+    "cutAfterJoinSec": 0.35,
+    "hookPreset": "PUNCH_EASE_108",
+    "bodyPreset": "PUNCH_EASE_106",
+    "cutPreset": "PUNCH_CUT_106"
+  },
+  "graphics": {
+    "allowed": [
+      "BigStatement",
+      "NumberCallout",
+      "Label"
+    ],
+    "maxPer30s": 2,
+    "hookMax": 1,
+    "minSec": 1.0,
+    "maxSec": 3.0,
+    "minSpacingSec": 6,
+    "regionPriority": [
+      "middle",
+      "upper"
+    ]
+  },
+  "broll": {
+    "policy": "approved_local_only",
+    "enabled": false
+  },
+  "transitions": {
+    "policy": "hard_cuts"
+  },
+  "sfx": {
+    "policy": "off"
+  },
+  "music": {
+    "policy": "off",
+    "duckDb": -18
+  },
+  "safeZones": {
+    "_doc": "Organic Reels UI: header top, caption/username/audio bottom, action icons right. Pixels at 1080x1920.",
+    "topPx": 220,
+    "bottomPx": 420,
+    "leftPx": 60,
+    "rightPx": 120
+  },
+  "hook": {
+    "windowSec": [
+      3,
+      5
+    ],
+    "treatments": [
+      "punch_in",
+      "bold_text"
+    ],
+    "maxGraphics": 1
+  },
+  "density": {
+    "hook": "high",
+    "body": "calm"
+  },
+  "audio": {
+    "targetLufs": -14,
+    "truePeakDb": -1.5,
+    "lra": 11,
+    "limiter": 0.794,
+    "joinFadeMs": 6,
+    "lufsTolerance": 1.5,
+    "maxTruePeakDb": -1.0
+  },
+  "qc": {
+    "minRoundTrip": 0.6,
+    "durationToleranceFrames": 1,
+    "avDeltaMaxSec": 0.08
+  }
+}

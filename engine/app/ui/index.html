@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Kit</title>
+<link rel="stylesheet" href="/ui/app.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><span class="tally" id="tally" aria-hidden="true"></span><span class="wordmark">Video Kit</span></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="edit" aria-selected="true">Edit a recording</button>
+    <button role="tab" data-tab="faceless">Make without filming</button>
+    <button role="tab" data-tab="styles">Styles</button>
+    <button role="tab" data-tab="profile">My profile</button>
+  </nav>
+  <div class="meta" id="meta"></div>
+</header>
+
+<main>
+  <!-- Setup: shown until the Mac has everything -->
+  <section class="panel setup" id="setup" hidden>
+    <h1 id="setup-title">Let's set up this Mac</h1>
+    <p class="lede" id="setup-lede">The kit needs a few free tools. This happens once and takes about 15 minutes.</p>
+    <ul class="checklist" id="setup-missing"></ul>
+    <div class="actions">
+      <button class="btn primary" id="setup-run">Install what's missing</button>
+      <button class="btn" id="setup-recheck">Check again</button>
+    </div>
+    <p class="hint" id="setup-hint"></p>
+  </section>
+
+  <section class="queue" id="queue" hidden>
+    <h3 class="section-title first">Working on it</h3>
+    <ol class="tasks" id="tasks"></ol>
+  </section>
+
+  <!-- EDIT -->
+  <section class="tab-panel" data-panel="edit">
+    <div class="viewfinder" id="drop" tabindex="0" aria-label="Drop a recording here">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="safe" aria-hidden="true"></div>
+      <div class="vf-rec" aria-hidden="true"><span class="dot"></span>STBY</div>
+      <div class="vf-tc" aria-hidden="true" id="vf-tc">00:00:00:00</div>
+      <div class="vf-body" id="vf-empty">
+        <h1>Drop your recording here</h1>
+        <p>Your original file is never changed.</p>
+        <button class="btn" id="pick">Choose from my Mac</button>
+      </div>
+      <div class="vf-body" id="vf-file" hidden>
+        <p class="eyebrow">Recording</p>
+        <h2 id="file-name"></h2>
+        <div class="upload" id="upload" hidden><div class="upload-bar"><span id="upload-fill"></span></div><span id="upload-pct"></span></div>
+        <button class="link" id="file-clear">Choose a different file</button>
+      </div>
+    </div>
+
+    <form class="options" id="edit-form">
+      <fieldset class="seg">
+        <legend>What do you want?</legend>
+        <label><input type="radio" name="mode" value="both" checked><span><b>Long video + shorts</b>YouTube edit, then the best moments as vertical shorts</span></label>
+        <label><input type="radio" name="mode" value="long"><span><b>Long video only</b>A clean 16:9 YouTube edit</span></label>
+        <label><input type="radio" name="mode" value="shorts"><span><b>Shorts only</b>The best 60–120 s moments, vertical</span></label>
+        <label><input type="radio" name="mode" value="short"><span><b>This is a short</b>You filmed it vertical as one short</span></label>
+      </fieldset>
+      <div class="row">
+        <label class="field"><span>Style</span>
+          <select name="style" id="style-select"><option value="">Kit default</option></select>
+        </label>
+        <label class="field narrow" id="count-field"><span>Shorts</span>
+          <select name="count"><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+        </label>
+        <button class="btn primary big" id="start" disabled>Make my videos</button>
+      </div>
+    </form>
+
+    <section>
+      <h3 class="section-title">Your videos</h3>
+      <div class="empty" id="jobs-empty">Nothing here yet. Drop a recording above and your finished videos appear here.</div>
+      <div class="jobs" id="jobs"></div>
+    </section>
+  </section>
+
+  <!-- FACELESS -->
+  <section class="tab-panel" data-panel="faceless" hidden>
+    <div class="panel">
+      <h1>Make a video without filming</h1>
+      <p class="lede">Type what it's about. Claude writes a script in your voice. You edit it, then the kit adds an AI voice-over, motion graphics and captions.</p>
+      <form id="idea-form" class="stack">
+        <label class="field wide"><span>What's the video about?</span>
+          <textarea name="idea" rows="3" required placeholder="Why your cheapest clients cost you the most"></textarea></label>
+        <div class="row">
+          <label class="field"><span>Format</span><select name="format"><option value="vertical">Vertical short (30–60 s)</option><option value="landscape">Landscape (2–4 min)</option></select></label>
+          <label class="field"><span>Style</span><select name="style" class="style-list"><option value="">Kit default</option></select></label>
+          <button class="btn primary" id="write-script">Write the script</button>
+        </div>
+      </form>
+      <form id="script-form" class="stack" hidden>
+        <label class="field wide"><span>Your script. Edit anything; every word will be spoken.</span>
+          <textarea name="script" rows="9" required></textarea></label>
+        <div class="row">
+          <label class="field"><span>Voice</span><select name="voice">
+            <option value="am_michael">US male</option><option value="am_adam">US male, deeper</option><option value="bm_george">UK male</option>
+            <option value="af_heart">US female</option><option value="af_nova">US female, brighter</option><option value="bf_emma">UK female</option></select></label>
+          <button class="btn primary" id="make-faceless">Make the video</button>
+        </div>
+      </form>
+    </div>
+    <h3 class="section-title">Your faceless videos</h3>
+    <div class="empty" id="faceless-empty">None yet.</div>
+    <div class="jobs" id="faceless-list"></div>
+  </section>
+
+  <!-- STYLES -->
+  <section class="tab-panel" data-panel="styles" hidden>
+    <div class="panel">
+      <h1>Learn a style from a video you like</h1>
+      <p class="lede">Paste a YouTube, TikTok or Instagram link. The kit studies how it's edited, including pacing, captions, zooms and structure, then makes your videos the same way. It never copies their footage, words, music or logo.</p>
+      <form id="style-form" class="row">
+        <label class="field wide"><span>Link to the video</span><input name="source" type="url" required placeholder="https://www.youtube.com/shorts/…"></label>
+        <label class="field"><span>Name this style</span><input name="name" required placeholder="punchy-shorts" pattern="[A-Za-z0-9 _-]+"></label>
+        <button class="btn primary">Learn this style</button>
+        <label class="check wide"><input type="checkbox" name="breakdown" checked> <span><b>Also make a full shot-by-shot breakdown</b>: how each shot was filmed or made, lighting, camera, captions and music. Claude checks every shot by eye. Takes about 3–5 minutes.</span></label>
+      </form>
+    </div>
+    <div class="empty" id="styles-empty">No styles yet. Your videos use the kit's clean default until you add one.</div>
+    <div class="styles" id="styles"></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="tab-panel" data-panel="profile" hidden>
+    <form class="panel stack" id="profile-form">
+      <h1 id="profile-title">Tell the kit about you</h1>
+      <p class="lede">This is used for your captions, thumbnails, scripts and post copy. Only claims you write here are ever used.</p>
+      <div class="grid2">
+        <label class="field"><span>Your name, as viewers know you</span><input name="name" required></label>
+        <label class="field"><span>Channel or brand name</span><input name="channel"></label>
+        <label class="field wide"><span>Who you help</span><input name="audience" placeholder="Young guys who want to start an AI agency"></label>
+        <label class="field wide"><span>What you sell</span><input name="offer" placeholder="1:1 coaching programme"></label>
+        <label class="field wide"><span>Your call to action, word for word, with the link</span><input name="cta" required placeholder="Book a free call with my team: yoursite.com/call"></label>
+        <label class="field"><span>How you sound (3 words)</span><input name="tone" placeholder="Direct, funny, no fluff"></label>
+        <label class="field"><span>Words you never want used</span><input name="never" placeholder="game-changer, hustle"></label>
+        <label class="field wide"><span>Proof you're allowed to mention (real results only)</span><textarea name="proof" rows="2" placeholder="Helped 120 people land their first client"></textarea></label>
+        <label class="field wide"><span>Names and terms you say that might get misspelled (comma-separated)</span><input name="terms" placeholder="GoHighLevel, Calendly, Sam Patel"></label>
+        <label class="field"><span>Brand colour</span><input name="accent" type="color" value="#FF4A1C"></label>
+        <label class="field"><span>Currency</span><select name="currency"><option>$</option><option>£</option><option>€</option></select></label>
+        <label class="field"><span>Caption font</span><select name="font"><option>Avenir Next Heavy</option><option>Avenir Next Demi Bold</option><option>Futura Bold</option><option>Helvetica Neue Bold</option><option>Arial Black</option></select></label>
+        <label class="field"><span>Where you post</span><input name="platforms" placeholder="YouTube, TikTok, Instagram"></label>
+      </div>
+      <div class="actions"><button class="btn primary">Save my profile</button><span class="hint" id="profile-saved"></span></div>
+    </form>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" class="dlg-body" id="dlg-form">
+    <h2 id="dlg-title"></h2>
+    <p id="dlg-text" class="lede"></p>
+    <label class="field wide" id="dlg-field"><span id="dlg-label"></span><input id="dlg-input"></label>
+    <div class="actions"><button class="btn primary" value="ok" id="dlg-ok">OK</button><button class="btn" value="cancel">Cancel</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/ui/app.js" type="module"></script>
+</body>
+</html>

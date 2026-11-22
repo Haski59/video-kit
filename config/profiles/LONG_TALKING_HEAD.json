@@ -1,0 +1,223 @@
+{
+  "_doc": [
+    "Long-form 16:9 (YouTube) \u2014 one person talking to camera.",
+    "Same engine as the short profile, tuned calmer: longer natural pauses kept, rare punch-ins, few graphics, lower-third captions.",
+    "captions.burn=false would skip burned captions (an .srt is always written for upload). Change a value \u2192 bump `version`."
+  ],
+  "id": "LONG_TALKING_HEAD",
+  "version": "1.0.1",
+  "status": "active",
+  "types": [
+    "long"
+  ],
+  "output": {
+    "width": 1920,
+    "height": 1080,
+    "fps": "source",
+    "fpsAllowed": [
+      24,
+      25,
+      30,
+      50,
+      60
+    ],
+    "fpsFallback": 30,
+    "videoCodec": "libx264",
+    "x264Profile": "high",
+    "crf": 18,
+    "preset": "medium",
+    "maxrate": "20M",
+    "bufsize": "40M",
+    "pixFmt": "yuv420p",
+    "colour": "bt709",
+    "audioCodec": "aac",
+    "audioBitrate": "192k",
+    "audioRate": 48000,
+    "audioChannels": 2
+  },
+  "pacing": {
+    "_doc": "Dead air between words longer than maxGapSec is SHORTENED to keepGapSec, never closed \u2014 speech with no breathing room is exhausting. Normal breaths under maxGapSec are untouched.",
+    "maxGapSec": 0.8,
+    "keepGapSec": 0.35,
+    "padSec": 0.06,
+    "edgeGapSec": 0.2,
+    "fillers": [
+      "um",
+      "uh",
+      "erm",
+      "uhh",
+      "umm",
+      "ah",
+      "er",
+      "hmm",
+      "mm"
+    ],
+    "audibleVetoFraction": 0.35,
+    "maxRemovedFraction": 0.5,
+    "suspectScoreMax": 0.25,
+    "suspectMaxAudibleFraction": 0.5
+  },
+  "silence": {
+    "offsetDb": 25,
+    "minDb": -60,
+    "maxDb": -30,
+    "minSilenceSec": 0.2
+  },
+  "retakes": {
+    "_doc": "Retakes are always identified. 'guarded' auto-applies only explicit restart markers and repeats that pass every guard; anything else stays proposed and sends the job to NEEDS_REVIEW.",
+    "autoApply": "guarded",
+    "minRun": 4,
+    "lookaheadSec": 12,
+    "guard": {
+      "minScore": 0.4,
+      "minAudibleFraction": 0.6,
+      "durationRatio": [
+        0.6,
+        1.6
+      ],
+      "maxGapBetweenTakesSec": 4
+    }
+  },
+  "reframe": {
+    "_doc": "16:9 source to 16:9 output keeps the full frame. A vertical or 4:3 source is cropped around the face.",
+    "mode": "face_crop",
+    "sampleFps": 3,
+    "minShiftFrac": 0.03,
+    "unstableSpreadFrac": 0.08,
+    "alreadyVerticalAspect": 0.6,
+    "faceAnchorYFrac": 0.4
+  },
+  "captions": {
+    "style": "KIT_CAPTION_V1",
+    "_fontDoc": "Use a named upright family (e.g. \"Avenir Next Heavy\"). A family + bold flag can make libass pick an italic face; render.js proves the face is upright before every render.",
+    "font": "Avenir Next Heavy",
+    "bold": false,
+    "fontSize": 58,
+    "charWidthEm": 0.62,
+    "primaryColour": "#FFFFFF",
+    "emphasisColour": "#1DB954",
+    "outlineColour": "#000000",
+    "outline": 5,
+    "shadow": 2,
+    "minWords": 2,
+    "maxWords": 7,
+    "maxCharsPerLine": 34,
+    "maxLines": 2,
+    "breakOnGapSec": 0.35,
+    "maxCueSec": 3.2,
+    "minCueSec": 0.4,
+    "tailHoldSec": 0.15,
+    "fadeInMs": 60,
+    "maxEmphasisPerCue": 1,
+    "uppercase": false,
+    "gapBelowFacePx": 24,
+    "preferredCentreYFrac": 0.86,
+    "maxWordsPerSec": 6.0,
+    "burn": true
+  },
+  "punchIns": {
+    "_doc": "Only around genuine emphasis. cut = instant reframe at a join (applied per segment). ease = smooth zoom (smoothstep) on the output timeline.",
+    "presets": {
+      "PUNCH_CUT_106": {
+        "kind": "cut",
+        "scale": 1.06
+      },
+      "PUNCH_CUT_108": {
+        "kind": "cut",
+        "scale": 1.08
+      },
+      "PUNCH_EASE_106": {
+        "kind": "ease",
+        "scale": 1.06,
+        "rampSec": 0.5
+      },
+      "PUNCH_EASE_108": {
+        "kind": "ease",
+        "scale": 1.08,
+        "rampSec": 0.45
+      },
+      "PUNCH_EASE_110": {
+        "kind": "ease",
+        "scale": 1.1,
+        "rampSec": 0.4
+      }
+    },
+    "maxScale": 1.1,
+    "minSpacingSec": 12,
+    "maxPer30s": 1,
+    "minHoldSec": 0.8,
+    "maxHoldSec": 4.0,
+    "maxCutHoldSec": 10.0,
+    "easeHoldSec": 1.0,
+    "cutAfterJoinSec": 0.35,
+    "hookPreset": "PUNCH_EASE_106",
+    "bodyPreset": "PUNCH_EASE_106",
+    "cutPreset": "PUNCH_CUT_106"
+  },
+  "graphics": {
+    "allowed": [
+      "BigStatement",
+      "NumberCallout",
+      "Label"
+    ],
+    "maxPer30s": 1,
+    "hookMax": 1,
+    "minSec": 1.0,
+    "maxSec": 3.0,
+    "minSpacingSec": 15,
+    "regionPriority": [
+      "upper",
+      "middle"
+    ]
+  },
+  "broll": {
+    "policy": "approved_local_only",
+    "enabled": false
+  },
+  "transitions": {
+    "policy": "hard_cuts"
+  },
+  "sfx": {
+    "policy": "off"
+  },
+  "music": {
+    "policy": "off",
+    "duckDb": -18
+  },
+  "safeZones": {
+    "_doc": "YouTube 16:9: keep clear of the progress bar and the corner end-screen buttons. Pixels at 1920x1080.",
+    "topPx": 60,
+    "bottomPx": 70,
+    "leftPx": 96,
+    "rightPx": 96
+  },
+  "hook": {
+    "windowSec": [
+      3,
+      8
+    ],
+    "treatments": [
+      "punch_in",
+      "bold_text"
+    ],
+    "maxGraphics": 1
+  },
+  "density": {
+    "hook": "high",
+    "body": "calm"
+  },
+  "audio": {
+    "targetLufs": -14,
+    "truePeakDb": -1.5,
+    "lra": 11,
+    "limiter": 0.794,
+    "joinFadeMs": 6,
+    "lufsTolerance": 1.5,
+    "maxTruePeakDb": -1.0
+  },
+  "qc": {
+    "minRoundTrip": 0.6,
+    "durationToleranceFrames": 1,
+    "avDeltaMaxSec": 0.08
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "_comment": [
+    "Vocabulary the transcriber should spell correctly. /setup writes member/lexicon.json with the member's own name, brand and niche terms; that file wins when it exists.",
+    "prompt: one sentence describing the speaker and topic — whisper uses it to spell names and jargon.",
+    "phrases: multi-word fixes; word count MUST match on both sides. replacements: single word to single word.",
+    "allowlist: words QA should not flag as misspellings."
+  ],
+  "prompt": "A talking-head video about business, marketing, sales and AI.",
+  "phrases": { "book a call": "book a call" },
+  "replacements": { "youtube": "YouTube", "chatgpt": "ChatGPT", "tiktok": "TikTok", "linkedin": "LinkedIn" },
+  "allowlist": ["AI", "YouTube", "ChatGPT", "TikTok", "LinkedIn", "Instagram"]
+}

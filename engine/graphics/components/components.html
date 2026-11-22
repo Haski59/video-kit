@@ -1,0 +1,130 @@
+<!doctype html>
+<!--
+  engine/graphics/components/components.html — the kit's on-screen graphic components.
+
+  Rendered by graphics/render.js in headless Chrome, one transparent PNG per output frame.
+  DETERMINISM: there are no CSS animations or timers. window.__mount(spec) builds the DOM once;
+  window.__frame(t) sets every animated property as a pure function of t (seconds since the graphic
+  appeared). The same t always produces the same pixels, so a re-render is byte-for-byte stable.
+
+  Brand: dark panel, the member's accent colour and font, uppercase. Tokens come from member/brand.json
+  (written by /setup), else config/brand.default.json.
+-->
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  #root { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .panel { box-sizing: border-box; border-radius: 22px; padding: 14px 30px; background: rgba(10,10,12,0.86);
+           box-shadow: 0 10px 34px rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; gap: 22px; max-width: 100%; max-height: 100%; }
+  .stack { flex-direction: column; gap: 2px; }
+  .txt { font-family: var(--font); font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 0.01em;
+         line-height: 1.02; text-align: center; white-space: nowrap; }
+  .accent { color: var(--green); }
+  .value { font-family: var(--font); font-weight: 800; color: var(--green); line-height: 0.95; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .label { font-family: var(--font); font-weight: 700; color: var(--text); text-transform: uppercase; white-space: nowrap; letter-spacing: 0.04em; }
+  .pill { box-sizing: border-box; border-radius: 999px; padding: 10px 34px; background: var(--green); }
+  .pill .txt { color: #0a0a0c; }
+</style></head>
+<body><div id="root"></div>
+<script>
+  const ease = (p) => 1 - Math.pow(1 - Math.min(1, Math.max(0, p)), 3); // easeOutCubic
+  let S = null;
+
+  function fit(el, maxPx, boxW, boxH, padW, padH) {
+    // Largest font size (≤ maxPx) at which the element fits the box. Deterministic binary search.
+    let lo = 10, hi = maxPx;
+    for (let k = 0; k < 18; k++) {
+      const mid = (lo + hi) / 2;
+      el.style.fontSize = mid + "px";
+      const r = el.getBoundingClientRect();
+      if (r.width + padW <= boxW && r.height + padH <= boxH) lo = mid; else hi = mid;
+    }
+    el.style.fontSize = Math.floor(lo) + "px";
+    return Math.floor(lo);
+  }
+
+  /** Parse "£10K/MO" → { prefix:"£", n:10, suffix:"K/MO", decimals:0 } for the count-up. */
+  function parseValue(v) {
+    const m = String(v).match(/^([^\d]*)(\d+(?:[.,]\d+)?)(.*)$/);
+    if (!m) return null;
+    const raw = m[2].replace(/,/g, "");
+    return { prefix: m[1], n: Number(raw), suffix: m[3], decimals: (raw.split(".")[1] || "").length, comma: m[2].includes(",") };
+  }
+  const fmt = (pv, x) => {
+    let s = x.toFixed(pv.decimals);
+    if (pv.comma) s = Number(s).toLocaleString("en-GB", { minimumFractionDigits: pv.decimals, maximumFractionDigits: pv.decimals });
+    return pv.prefix + s + pv.suffix;
+  };
+
+  window.__mount = (spec) => {
+    const { component, props, box, brand } = spec;
+    document.documentElement.style.setProperty("--font", brand.cssFont);
+    document.documentElement.style.setProperty("--green", brand.accent ?? brand.green);
+    document.documentElement.style.setProperty("--text", brand.text);
+    const root = document.getElementById("root");
+    root.innerHTML = "";
+    const W = box.w, H = box.h;
+    S = { component, props, el: null, parts: {} };
+    if (component === "BigStatement") {
+      const panel = document.createElement("div"); panel.className = "panel";
+      const t = document.createElement("div"); t.className = "txt";
+      const words = String(props.text).trim().split(/\s+/);
+      // The last word carries the accent — the claim lands on it.
+      t.innerHTML = words.map((w, i) => i === words.length - 1 && words.length > 1 ? `<span class="accent">${esc(w)}</span>` : esc(w)).join(" ");
+      panel.appendChild(t); root.appendChild(panel);
+      fit(t, 96, W - 8, H - 8, 60, 28);
+      S.el = panel;
+    } else if (component === "NumberCallout") {
+      const pv = parseValue(props.value);
+      const stacked = H >= 170 && props.label;
+      const panel = document.createElement("div"); panel.className = "panel" + (stacked ? " stack" : "");
+      const v = document.createElement("div"); v.className = "value"; v.textContent = props.value;
+      panel.appendChild(v);
+      let l = null;
+      if (props.label) { l = document.createElement("div"); l.className = "label"; l.textContent = props.label; panel.appendChild(l); }
+      root.appendChild(panel);
+      // Size the value first (at its final, widest text), then the label relative to it.
+      const vMax = stacked ? Math.min(150, H * 0.62) : Math.min(120, H * 0.78);
+      if (l) l.style.fontSize = "10px";
+      const vs = fit(v, vMax, W - 8 - (stacked ? 0 : 200), H - 8 - (stacked ? 40 : 0), 60, 28);
+      if (l) { l.style.fontSize = Math.round(vs * (stacked ? 0.34 : 0.42)) + "px"; while (panel.getBoundingClientRect().width > W - 8 && parseFloat(l.style.fontSize) > 12) l.style.fontSize = (parseFloat(l.style.fontSize) - 2) + "px"; }
+      S.el = panel; S.parts = { v, pv };
+    } else if (component === "Label") {
+      const pill = document.createElement("div"); pill.className = "pill";
+      const t = document.createElement("div"); t.className = "txt"; t.textContent = props.text;
+      pill.appendChild(t); root.appendChild(pill);
+      fit(t, 64, W - 8, H - 8, 68, 20);
+      S.el = pill;
+    } else {
+      throw new Error("unknown component " + component);
+    }
+    return true;
+  };
+
+  window.__frame = (t, duration) => {
+    const inP = ease(t / 0.2), outP = Math.min(1, Math.max(0, (duration - t) / 0.15));
+    const opacity = Math.min(inP, outP);
+    if (S.component === "Label") {
+      S.el.style.transform = `translateX(${(-60 * (1 - inP)).toFixed(2)}px)`;
+    } else {
+      S.el.style.transform = `scale(${(0.92 + 0.08 * inP).toFixed(4)})`;
+    }
+    S.el.style.opacity = opacity.toFixed(4);
+    if (S.component === "NumberCallout" && S.parts.pv) {
+      const p = ease(t / 0.55);
+      S.parts.v.textContent = p >= 1 ? S.props.value : fmt(S.parts.pv, S.parts.pv.n * p);
+    }
+    return true;
+  };
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+  /** Is the brand font really available? Compare against a generic fallback's metrics. */
+  window.__fontAvailable = (family) => {
+    const c = document.createElement("canvas").getContext("2d");
+    const probe = "QWERTY £10K/MO skills 0123456789";
+    c.font = `800 60px monospace`; const a = c.measureText(probe).width;
+    c.font = `800 60px "${family}", monospace`; const b = c.measureText(probe).width;
+    return Math.abs(a - b) > 1;
+  };
+</script></body></html>

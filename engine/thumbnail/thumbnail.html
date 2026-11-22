@@ -1,0 +1,66 @@
+<!doctype html>
+<!--
+  engine/thumbnail/thumbnail.html — 1280×720 thumbnail layout, rendered by make.js in headless Chrome.
+  window.__mount(spec) draws once and returns the text block's box (px) for QA. No animation.
+-->
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #000; }
+  #bg { position: absolute; inset: 0; width: 1280px; height: 720px; object-fit: cover; }
+  #shade { position: absolute; inset: 0; }
+  #text { position: absolute; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 4px; }
+  .line { font-weight: 900; font-size: 112px; line-height: 0.98; text-transform: uppercase; letter-spacing: -0.01em;
+          color: #fff; -webkit-text-stroke: 3px rgba(0,0,0,0.85); paint-order: stroke fill; text-shadow: 0 6px 24px rgba(0,0,0,0.6); white-space: nowrap; }
+</style></head>
+<body>
+<img id="bg" alt="">
+<div id="shade"></div>
+<div id="text"></div>
+<script>
+window.__mount = async ({ image, face, layout, brand }) => {
+  const bg = document.getElementById("bg");
+  bg.src = image;
+  await bg.decode();
+  // Text goes on the side away from the face (left if the face is right of centre).
+  const faceCx = face ? face.x + face.w / 2 : 0.7;
+  const textLeft = faceCx >= 0.5;
+  const shade = document.getElementById("shade");
+  shade.style.background = `linear-gradient(${textLeft ? "90deg" : "270deg"}, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0) 62%)`;
+  const box = document.getElementById("text");
+  box.style[textLeft ? "left" : "right"] = "56px";
+  box.style.textAlign = textLeft ? "left" : "right";
+  box.style.fontFamily = brand.cssFont || "-apple-system, sans-serif";
+  let k = 0;
+  for (const line of layout.lines) {
+    const el = document.createElement("div");
+    el.className = "line";
+    for (const [i, w] of line.entries()) {
+      const s = document.createElement("span");
+      s.textContent = (i ? " " : "") + w;
+      if (k === layout.accent) s.style.color = brand.accent || "#facc15";
+      el.appendChild(s);
+      k++;
+    }
+    box.appendChild(el);
+  }
+  // Shrink until every line's real ink width fits its side and never crosses the face.
+  // (Lines are nowrap: the box itself does not grow with overflow, so measure the text, not the box.)
+  const limit = Math.min(620, face ? (textLeft ? face.x * 1280 - 48 - 56 : 1280 - (face.x + face.w) * 1280 - 48 - 56) : 620);
+  const lines = [...box.querySelectorAll(".line")];
+  const inkRect = () => {
+    const rs = lines.map((l) => { const rg = document.createRange(); rg.selectNodeContents(l); return rg.getBoundingClientRect(); });
+    const x0 = Math.min(...rs.map((r) => r.left)), x1 = Math.max(...rs.map((r) => r.right));
+    const y0 = Math.min(...rs.map((r) => r.top)), y1 = Math.max(...rs.map((r) => r.bottom));
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  };
+  await document.fonts.ready;
+  let size = 112;
+  while (size > 44 && (inkRect().w > Math.max(300, limit) || inkRect().h > 600)) {
+    size -= 4;
+    lines.forEach((l) => { l.style.fontSize = `${size}px`; });
+  }
+  const r = inkRect();
+  return { x: r.x, y: r.y, w: r.w, h: r.h, fontSize: size, side: textLeft ? "left" : "right", limit };
+};
+</script>
+</body></html>

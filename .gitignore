@@ -1,0 +1,7 @@
+node_modules/
+member/
+projects/
+output/
+.agents/product-marketing.md
+.DS_Store
+*.partial.mp4
