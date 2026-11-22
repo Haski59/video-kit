@@ -245,4 +245,9 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("/kit")) main().then((code) => process.exit(code));
+// Run only when started as a program (not when imported by tests). Compare real paths, not URLs: the
+// install folder is "~/Video Kit", and a URL spells that space as %20, which never matched argv.
+const startedAsProgram = (() => {
+  try { return fs.realpathSync(process.argv[1] ?? "") === fs.realpathSync(new URL(import.meta.url)); } catch { return false; }
+})();
+if (startedAsProgram || process.argv[1]?.endsWith("/kit")) main().then((code) => process.exit(code));

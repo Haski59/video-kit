@@ -242,3 +242,15 @@ test("captions: words the transcriber stacked on one start time are spread out, 
   assert.deepEqual(got, ws.map((w) => w.text));
   for (let i = 1; i < cues.length; i++) assert.ok(cues[i].start >= cues[i - 1].start && cues[i - 1].end > cues[i - 1].start);
 });
+
+test("cli: runs from a folder whose name has a space (the installed ~/Video Kit)", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kit space-"));
+  const link = path.join(dir, "Video Kit");
+  fs.symlinkSync(path.resolve("."), link);
+  try {
+    const r = spawnSync(process.execPath, [path.join(link, "engine", "cli.js")], { encoding: "utf8" });
+    assert.equal(r.status, 2, "with no command it must print usage and exit 2, not exit 0 silently");
+    assert.match(r.stderr, /usage:/);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});

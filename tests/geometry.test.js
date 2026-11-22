@@ -122,3 +122,11 @@ test("output fps snaps to an allowed rate; nothing is ever written inside the so
   assert.throws(() => assertOutputOutsideSource("/footage/day1/out/v1.mp4", "/footage/day1/raw.mov"), (e) => e.code === "OUTPUT_IN_SOURCE_DIR");
   assert.doesNotThrow(() => assertOutputOutsideSource("/repo/output/S001/renders/v1.mp4", "/footage/day1/raw.mov"));
 });
+
+test("source duration: the video stream's end wins when the audio runs longer (no sound-only tail)", () => {
+  const streams = [{ codec_type: "video", width: 256, height: 144, r_frame_rate: "30/1", avg_frame_rate: "30/1", duration: "614.833333" }, { index: 1, codec_type: "audio", channels: 2, duration: "614.887619" }];
+  assert.equal(parseProbe({ format: { duration: "614.887619" }, streams }).durationSec, 614.833333);
+  // no per-stream duration (e.g. some .mkv files): the container's duration is used
+  const mkv = streams.map(({ duration, ...s }) => s);
+  assert.equal(parseProbe({ format: { duration: "12.5" }, streams: mkv }).durationSec, 12.5);
+});

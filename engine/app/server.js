@@ -54,9 +54,13 @@ function newTask(kind, title, meta = {}) {
   return t;
 }
 
+// Claude Code housekeeping that means nothing to a member (the app already passes the allowed tools and
+// gives Claude no input), kept out of the task log.
+const LOG_NOISE = [/^Ignoring \d+ permissions\.allow entries/, /^Warning: no stdin data received/];
+
 function addLog(t, line) {
   const s = line.replace(/\x1b\[[0-9;]*m/g, "").trimEnd();
-  if (!s.trim()) return;
+  if (!s.trim() || LOG_NOISE.some((re) => re.test(s))) return;
   t.log.push(s);
   for (const [name, re] of STAGES) if (re.test(s)) t.stage = name;
   saveTasks();
@@ -65,7 +69,7 @@ function addLog(t, line) {
 /** Run one command as part of a task; resolves with { code, out }. */
 function run(t, cmd, cmdArgs, { env = {}, cwd = KIT } = {}) {
   return new Promise((resolve) => {
-    const p = spawn(cmd, cmdArgs, { cwd, env: { ...process.env, KIT_ROOT: ROOT, ...env } });
+    const p = spawn(cmd, cmdArgs, { cwd, env: { ...process.env, KIT_ROOT: ROOT, ...env }, stdio: ["ignore", "pipe", "pipe"] });
     t.proc = p;
     let out = "", buf = "";
     const onData = (d) => {
@@ -281,7 +285,7 @@ async function startScript({ idea, format, style }) {
   const t = newTask("script", `Script · ${idea.slice(0, 60)}`, { idea, format, style });
   (async () => {
     const s = slug(idea.split(/\s+/).slice(0, 6).join(" "));
-    const r = await claudeTask(t, `Follow the /faceless skill, steps 1–2 only: write the spoken script for a ${format === "landscape" ? "landscape 2–4 minute" : "vertical 30–60 second"} faceless video about: "${idea}".${style ? ` Use the structure in output/references/${style}/STYLE.md.` : ""} Save it to projects/${s}/script.txt and stop — do not voice or render. Don't ask questions.`, { tools: "Read,Write,Glob,Grep,Skill" });
+    const r = await claudeTask(t, `Follow the /faceless skill, steps 1–2 only: write the spoken script for a ${format === "landscape" ? "landscape 2–4 minute" : "vertical 30–60 second"} faceless video about: "${idea}".${style ? ` Use the structure in output/references/${style}/STYLE.md.` : ""} Save it to projects/${s}/script.txt and stop — do not voice or render. Don't ask questions or ask for approval: the member reviews and edits the script in the app. Your last line must be exactly: Script ready to edit.`, { tools: "Read,Write,Glob,Grep,Skill" });
     const file = path.join(ROOT, "projects", s, "script.txt");
     finish(t, r.code === 0 && fs.existsSync(file) ? "done" : "failed", { slug: s });
   })();

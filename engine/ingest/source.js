@@ -42,7 +42,14 @@ export function parseProbe(json) {
   const streams = json.streams ?? [];
   const v = streams.find((s) => s.codec_type === "video" && !(s.disposition?.attached_pic));
   const audios = streams.filter((s) => s.codec_type === "audio");
-  const durationSec = Number.parseFloat(json.format?.duration ?? v?.duration ?? "NaN");
+  // The edit can't run past the last picture frame. When the audio runs longer than the video (common in
+  // downloads and some phone files), the container duration is the audio's, and the render's tail would
+  // carry sound with no picture (an av_sync failure). Use the video stream's own length when it has one.
+  const formatSec = Number.parseFloat(json.format?.duration ?? "NaN");
+  const videoSec = Number.parseFloat(v?.duration ?? "NaN");
+  const durationSec = Number.isFinite(videoSec) && videoSec > 0
+    ? (Number.isFinite(formatSec) && formatSec > 0 ? Math.min(formatSec, videoSec) : videoSec)
+    : formatSec;
   const problems = [];
   if (!Number.isFinite(durationSec) || durationSec <= 0) problems.push("no usable duration — file is corrupt or not media");
   if (!v) problems.push("no video stream");
