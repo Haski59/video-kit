@@ -124,7 +124,7 @@ else note "rea-video not set up (only needed for full breakdowns; ./setup.sh ins
 
 step "5. Claude Code"
 if command -v claude >/dev/null 2>&1; then ok "Claude Code $(claude --version 2>/dev/null | awk '{print $1}')"
-else miss "Claude Code is not installed — see https://claude.com/claude-code (the kit runs inside it)"; fi
+else miss "Claude Code is not installed — paste the Video Kit install line again to add it"; fi
 
 step "6. Kit engine"
 if [ -d node_modules/puppeteer-core ]; then ok "engine packages installed"
@@ -142,8 +142,14 @@ else
     src="${p%%|*}"; id="${p##*|}"
     if grep -q "\"$id\"" .claude/settings.json 2>/dev/null && claude plugin list 2>/dev/null | grep -q "${id%%@*}"; then ok "$id"; continue; fi
     if [ "$MODE" = install ]; then
-      claude plugin marketplace add "$src" --scope project >/dev/null 2>&1
-      if claude plugin install "$id" --scope project >/dev/null 2>&1; then ok "$id installed"; else miss "$id failed — inside Claude Code run: /plugin marketplace add $src  then  /plugin install $id"; fi
+      # Errors go to a log outside this folder (keeps updates clean); one retry covers a network blip.
+      PLOG="$HOME/Library/Logs/video-kit/setup.log"; mkdir -p "$(dirname "$PLOG")"
+      done_ok=0
+      for attempt in 1 2; do
+        { echo "== $(date '+%F %T') $id (attempt $attempt)"; claude plugin marketplace add "$src" --scope project; claude plugin install "$id" --scope project; } </dev/null >>"$PLOG" 2>&1 \
+          && { done_ok=1; break; }
+      done
+      if [ "$done_ok" = 1 ]; then ok "$id installed"; else miss "$id failed (details in ~/Library/Logs/video-kit/setup.log) — open Video Kit and click Install what's missing to retry"; fi
     else miss "$id (run ./setup.sh)"; fi
   done
 fi

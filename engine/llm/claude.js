@@ -19,10 +19,18 @@ export function findClaude() {
     .filter(Boolean).find((p) => existsSync(p)) || "";
 }
 
+/** Read `claude auth status` output: true / false, or null when it can't be told (older CLI). */
+export function parseAuthStatus(stdout) {
+  try {
+    const j = JSON.parse(String(stdout || "").trim());
+    return typeof j.loggedIn === "boolean" ? j.loggedIn : null;
+  } catch { return null; }
+}
+
 /** Run one tool-less prompt. Returns { text, costUsd }. Throws with a readable reason. */
 export function runClaude({ system, prompt, timeoutMs = 120000, model = MODEL }) {
   const bin = findClaude();
-  if (!bin) throw new Error("the `claude` command was not found — install Claude Code (see SOP 00)");
+  if (!bin) throw new Error("the `claude` command was not found — paste the Video Kit install line again to add Claude Code");
   // An empty scratch cwd so the call never picks up this repo's CLAUDE.md or skills.
   const cwd = mkdtempSync(path.join(tmpdir(), "kit-llm-"));
   try {

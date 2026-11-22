@@ -14,17 +14,18 @@ copy. Drop a video in, press one button. Everything runs on your Mac; your foota
 
 ## Start here (one line, about 15 minutes the first time)
 
-You need a Mac with an Apple chip (M1 or newer), about 10 GB free, and Claude Code signed in.
+You need a Mac with an Apple chip (M1 or newer), about 10 GB free, and a Claude account (Pro or Max
+recommended). The installer adds everything else, Claude Code included.
 
-Paste this into **Claude Code** (or the Terminal app) and press Return:
+Paste this into **Claude Code** or the **Terminal** app (press Cmd+Space, type Terminal) and press Return:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Haski59/video-kit/main/install.sh | bash
 ```
 
 A Terminal window installs everything. It asks for your Mac password once, only if your Mac needs
-Homebrew. When it's done, **Video Kit opens in your browser**: fill in **My profile**, drop a recording
-and click **Make my videos**.
+Homebrew. When it's done, **Video Kit opens in your browser**. If it shows **Sign in to Claude**, click it and
+follow the steps once. Then fill in **My profile**, drop a recording and click **Make my videos**.
 
 Your finished videos appear below the frame, with a player, **Show in Finder**, **Make thumbnail**,
 **Write post copy** and **Ask for a change**. If something needs a look, the card tells you the exact time.

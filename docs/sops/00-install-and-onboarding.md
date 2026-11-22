@@ -15,10 +15,10 @@ profile once. After that you open Video Kit, drop a recording and press one butt
 
 ### Step 1: Check Your Mac
 - A Mac with an Apple chip (M1 or newer) and about 10 GB free.
-- Claude Code installed and signed in (claude.com/claude-code). A Pro or Max plan is recommended; the kit uses Claude for scripts, post copy and choosing the best moments.
+- A Claude account. A Pro or Max plan is recommended; the kit uses Claude for scripts, post copy and choosing the best moments. The installer adds Claude Code for you if your Mac doesn't have it.
 
 ### Step 2: Paste The Install Line
-Paste this into Claude Code (or the Terminal app) and press Return:
+Paste this into Claude Code or the Terminal app (press Cmd+Space, type Terminal) and press Return:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Haski59/video-kit/main/install.sh | bash
@@ -27,6 +27,7 @@ curl -fsSL https://raw.githubusercontent.com/Haski59/video-kit/main/install.sh |
 A Terminal window opens and installs the free tools: ffmpeg, the speech-to-text engine and model (1.6 GB), Node.js, the voice engine and the kit's Claude plugins. It takes about 15 minutes.
 - **It asks for your password:** that's Homebrew (only on Macs that don't have it). Type your Mac password and press Return; the letters don't show while you type.
 - When everything is in, your browser opens **Video Kit**.
+- **It shows "Sign in to Claude":** click **Sign in to Claude**, follow the steps in the small window that opens, then click **Check again**. You only do this once.
 
 ### Step 3: Fill In My Profile
 The app opens on **My profile**. Fill in:

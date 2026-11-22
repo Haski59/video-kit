@@ -113,7 +113,7 @@ $("#edit-form").addEventListener("submit", async (e) => {
 // ── faceless ──
 $("#idea-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!state?.claude) return toast("Claude Code isn't installed on this Mac. See SOP 00.");
+  if (!claudeReady()) return;
   const fd = new FormData(e.target);
   try {
     const t = await api("/api/script", { idea: fd.get("idea"), format: fd.get("format"), style: fd.get("style") || null });
@@ -161,6 +161,16 @@ $("#profile-form").addEventListener("submit", async (e) => {
   } catch (err) { toast(err.message); }
 });
 let wasOnboarded = true;
+
+// ── Claude sign-in ──
+/** True when the writing buttons can run; otherwise says what to do and points at the sign-in panel. */
+function claudeReady() {
+  if (!state?.claude) { toast("Claude isn't on this Mac yet. Paste the Video Kit install line again to add it."); return false; }
+  if (state.claudeSignedIn === false) { toast("Sign in to Claude first: use the Sign in to Claude button at the top."); $("#signin").scrollIntoView({ behavior: "smooth" }); return false; }
+  return true;
+}
+$("#signin-run").addEventListener("click", async () => { try { await api("/api/signin"); toast("Follow the steps in the window that opened, then click Check again."); } catch (e) { toast(e.message); } });
+$("#signin-recheck").addEventListener("click", () => refresh(true));
 
 // ── setup ──
 $("#setup-run").addEventListener("click", async () => { try { await api("/api/setup"); refresh(); } catch (e) { toast(e.message); } });
@@ -285,11 +295,11 @@ function bindJobButtons(root) {
     api("/api/thumbnail", { id: b.dataset.thumb, text }).then(() => { toast("Making the thumbnail…"); refresh(); }).catch((e) => toast(e.message));
   }));
   $$("[data-copy]", root).forEach((b) => b.addEventListener("click", () => {
-    if (!state.claude) return toast("Claude Code isn't installed on this Mac. See SOP 00.");
+    if (!claudeReady()) return;
     api("/api/copy", { id: b.dataset.copy }).then(() => { toast("Claude is writing your titles, description and captions…"); refresh(); }).catch((e) => toast(e.message));
   }));
   $$("[data-fix]", root).forEach((b) => b.addEventListener("click", async () => {
-    if (!state.claude) return toast("Claude Code isn't installed on this Mac. See SOP 00.");
+    if (!claudeReady()) return;
     const request = await ask({ title: `Change ${b.dataset.fix}`, text: "Say what to change, with the time if you can.", label: "What should change?", placeholder: "Keep the bit at 2:03, it was cut by mistake", ok: "Make the change" });
     if (request) api("/api/fix", { id: b.dataset.fix, request }).then(() => { toast("Working on your change…"); refresh(); }).catch((e) => toast(e.message));
   }));
@@ -367,15 +377,21 @@ function renderSetup() {
   $("#setup-run").disabled = installing;
   $("#setup-run").textContent = installing ? "Installing…" : "Install what's missing";
   const hints = [];
-  if (you.some((m) => /Homebrew/.test(m.text))) hints.push("Homebrew asks for your Mac password, so it can't be installed from here. Open <b>Terminal</b>, paste the command from SOP 00, then click <b>Check again</b>.");
+  if (you.some((m) => /Homebrew/.test(m.text))) hints.push("Homebrew asks for your Mac password, so it can't be installed from here. Open <b>Terminal</b>, paste the Video Kit install line, then click <b>Check again</b>.");
   if (you.some((m) => /free/.test(m.text))) hints.push("Free up space: empty the Bin, delete old exports, or move footage to an external drive. Then click <b>Check again</b>.");
-  if (you.some((m) => /Chrome|Claude Code/.test(m.text))) hints.push("Install it using the link above, then click <b>Check again</b>.");
+  if (you.some((m) => /Chrome/.test(m.text))) hints.push("Install it using the link above, then click <b>Check again</b>.");
+  if (you.some((m) => /Claude Code/.test(m.text))) hints.push("Open <b>Terminal</b>, paste the Video Kit install line, then click <b>Check again</b>.");
   $("#setup-hint").innerHTML = hints.join("<br>");
+}
+
+function renderSignIn() {
+  const show = state.setup.ready && state.claude && state.claudeSignedIn === false;
+  $("#signin").hidden = !show;
 }
 
 function renderMeta() {
   const g = state.freeGb;
-  $("#meta").innerHTML = `${state.profile.name ? `<span>${esc(state.profile.name.split("(")[0].trim())}</span>` : ""}<span class="${g !== null && g < 10 ? "warn" : ""}">${g ?? "?"} GB free</span>${state.claude ? "" : '<span class="warn">Claude Code not found</span>'}`;
+  $("#meta").innerHTML = `${state.profile.name ? `<span>${esc(state.profile.name.split("(")[0].trim())}</span>` : ""}<span class="${g !== null && g < 10 ? "warn" : ""}">${g ?? "?"} GB free</span>${!state.claude ? '<span class="warn">Claude not installed</span>' : state.claudeSignedIn === false ? '<span class="warn">Claude not signed in</span>' : ""}`;
 }
 
 function announce() {
@@ -390,8 +406,8 @@ async function refresh(recheck = false) {
   try {
     const r = await fetch(`/api/state${recheck === true ? "?recheck=1" : ""}`);
     state = await r.json();
-  } catch { $("#meta").innerHTML = '<span class="warn">The kit has stopped. Double-click Video Kit to start it again.</span>'; return; }
-  renderSetup(); renderMeta(); renderTasks(); renderJobs(); renderFaceless(); renderStyles(); renderProfile(); announce();
+  } catch { $("#meta").innerHTML = '<span class="warn">The kit has stopped. Open Video Kit again to restart it.</span>'; return; }
+  renderSetup(); renderSignIn(); renderMeta(); renderTasks(); renderJobs(); renderFaceless(); renderStyles(); renderProfile(); announce();
   if (refresh.first) {
     refresh.first = false;
     wasOnboarded = state.profile.onboarded;

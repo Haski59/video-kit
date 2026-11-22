@@ -66,3 +66,11 @@ test("the prompt carries only the menu, candidates and transcript; the system pr
   assert.match(SYSTEM_PROMPT, /cannot remove, reorder or rewrite speech/);
   assert.deepEqual(parseJsonObject('x {"a":{"b":"}"}} y'), { a: { b: "}" } });
 });
+
+test("claude auth status: signed in, signed out, and unreadable output", async () => {
+  const { parseAuthStatus } = await import("../engine/llm/claude.js");
+  assert.equal(parseAuthStatus('{"loggedIn": true, "authMethod": "claude.ai"}'), true);
+  assert.equal(parseAuthStatus('{\n  "loggedIn": false,\n  "authMethod": "none"\n}\n'), false);
+  assert.equal(parseAuthStatus("error: unknown command 'auth'"), null);
+  assert.equal(parseAuthStatus(""), null);
+});

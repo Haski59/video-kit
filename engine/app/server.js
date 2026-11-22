@@ -16,7 +16,7 @@ import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { REPO_ROOT, readJson, writeJsonAtomic, pathsFor } from "../storage/files.js";
-import { findClaude } from "../llm/claude.js";
+import { findClaude, parseAuthStatus } from "../llm/claude.js";
 
 const ROOT = process.env.KIT_ROOT ? path.resolve(process.env.KIT_ROOT) : REPO_ROOT;
 const KIT = REPO_ROOT;
@@ -97,7 +97,7 @@ const statusOf = (code) => (code === 0 ? "done" : code === 3 ? "needs_review" : 
 /** Claude Code headless inside the kit — the member's own login. */
 function claudeTask(t, prompt, { tools = "Bash,Read,Write,Edit,Glob,Grep,Skill" } = {}) {
   const bin = findClaude();
-  if (!bin) { addLog(t, "Claude Code is not installed — see SOP 00."); return Promise.resolve({ code: 1, out: "" }); }
+  if (!bin) { addLog(t, "Claude isn't on this Mac yet. Paste the Video Kit install line again to add it."); return Promise.resolve({ code: 1, out: "" }); }
   return run(t, bin, ["-p", prompt, "--allowedTools", tools, "--output-format", "text"], { cwd: ROOT === KIT ? KIT : ROOT });
 }
 
@@ -122,6 +122,38 @@ function refreshSetup() {
     setupRunning = false;
   });
 }
+// Claude Code installed and signed in? Asked in the background (a second or two), cached for 30 s.
+let claudeCache = { at: 0, installed: Boolean(findClaude()), signedIn: null };
+let claudeChecking = false;
+function refreshClaude() {
+  if (claudeChecking) return;
+  const bin = findClaude();
+  if (!bin) { claudeCache = { at: Date.now(), installed: false, signedIn: false }; return; }
+  claudeChecking = true;
+  const p = spawn(bin, ["auth", "status"]);
+  let out = "";
+  p.stdout.on("data", (d) => { out += d; });
+  p.on("error", () => { claudeChecking = false; });
+  p.on("close", () => { claudeCache = { at: Date.now(), installed: true, signedIn: parseAuthStatus(out) }; claudeChecking = false; });
+}
+function claudeState(force = false) {
+  if (force || Date.now() - claudeCache.at > 30000) refreshClaude();
+  return claudeCache;
+}
+refreshClaude();
+
+/** Open Terminal on a small script that runs Claude's own sign-in (no "control Terminal" permission). */
+function openClaudeSignIn() {
+  const bin = findClaude();
+  if (!bin) throw new Error("Claude Code isn't installed yet. Paste the Video Kit install line again to add it.");
+  const dir = path.join(os.homedir(), "Library", "Caches", "video-kit");
+  fs.mkdirSync(dir, { recursive: true });
+  const f = path.join(dir, "sign-in.command");
+  const q = (s) => `'${String(s).replace(/'/g, "'\\''")}'`;
+  fs.writeFileSync(f, `#!/bin/bash\nclear\necho "Sign in to Claude"\necho "-----------------"\n${q(bin)} auth login\necho\necho "Done. Go back to Video Kit in your browser. You can close this window."\n`, { mode: 0o755 });
+  spawnSync("/usr/bin/open", ["-a", "Terminal", f]);
+}
+
 function setupStatus(force = false) {
   if (force || (!setupCache.checking && Date.now() - setupCache.at > 120000)) refreshSetup();
   return setupCache;
@@ -351,7 +383,8 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === "GET" && url.pathname === "/api/state") {
       return send(res, 200, { setup: setupStatus(url.searchParams.get("recheck") === "1"), profile: profile(), jobs: jobs(), styles: styles(), faceless: faceless(), freeGb: freeGb(),
-        claude: Boolean(findClaude()),
+        claude: claudeState(url.searchParams.get("recheck") === "1").installed,
+        claudeSignedIn: claudeCache.signedIn,
         tasks: [...tasks.values()].slice(-40).reverse().map(({ proc, log, ...t }) => ({ ...t, last: log.slice(-1)[0] ?? "", log: log.slice(-60) })) });
     }
     if (req.method === "POST" && url.pathname === "/api/upload") {
@@ -384,6 +417,7 @@ const server = http.createServer(async (req, res) => {
         (async () => { const r = await run(t, "/bin/bash", [path.join(KIT, "setup.sh")]); refreshSetup(); finish(t, r.code === 0 ? "done" : "failed"); })();
         return send(res, 200, t);
       }
+      case "POST /api/signin": openClaudeSignIn(); claudeCache.at = 0; return send(res, 200, { ok: true });
       case "POST /api/reveal": {
         if (!body.path || !inside(body.path, MEDIA_ROOTS)) return send(res, 400, { error: "not a kit file" });
         spawnSync("/usr/bin/open", ["-R", body.path]);

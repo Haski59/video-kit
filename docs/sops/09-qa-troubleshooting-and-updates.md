@@ -23,6 +23,7 @@ Most problems are setup problems, and `/doctor` finds them. Updates are one comm
 | `unreviewed_retake` | the kit found a possible double take but wasn't sure | listen; say "remove the first take at <time>" if so |
 | `face_vs_text` | text near your face | look at that time |
 | `round_trip` | the audio didn't match the captions well | check the captions there for wrong words |
+| "Sign in to Claude" at the top of the app | Claude isn't signed in on this Mac | click **Sign in to Claude**, follow the steps once, then **Check again** |
 | "LLM planner unavailable" | Claude was busy or at its limit; the rule-based planner was used | nothing; the edit is valid |
 | "word timing not force-aligned" | normal on a standard install; cuts still sit in measured pauses | nothing |
 

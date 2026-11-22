@@ -26,12 +26,21 @@ if ! { : </dev/tty; } 2>/dev/null; then
   if [ "${VIDEO_KIT_NO_HANDOFF:-0}" = 1 ]; then
     echo "No terminal attached; continuing without one (VIDEO_KIT_NO_HANDOFF=1)."
   else
-    osascript >/dev/null <<OSA
-tell application "Terminal"
-  activate
-  do script "curl -fsSL '$RAW' | bash"
-end tell
-OSA
+    # A .command file opened with `open` needs no "allow this app to control Terminal" permission.
+    CACHE="$HOME/Library/Caches/video-kit"; mkdir -p "$CACHE"
+    {
+      echo '#!/bin/bash'
+      for v in $(compgen -e | grep '^VIDEO_KIT_' | grep -v '^VIDEO_KIT_NO_HANDOFF$'); do printf 'export %s=%q\n' "$v" "${!v}"; done
+      if [ -f "${BASH_SOURCE[0]:-}" ]; then
+        printf 'exec /bin/bash %q\n' "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+      else
+        # Download the whole installer first, then run it (never a half-downloaded script).
+        printf 'curl -fsSL %q -o %q && exec /bin/bash %q\n' "$RAW" "$CACHE/install.sh" "$CACHE/install.sh"
+        echo 'echo "Couldn'"'"'t download Video Kit. Check your internet, then paste the line again."'
+      fi
+    } >"$CACHE/install.command"
+    chmod +x "$CACHE/install.command"
+    open -a Terminal "$CACHE/install.command" || stop "Couldn't open Terminal. Open the Terminal app, paste the line there and press Return."
     echo "Video Kit is installing in a Terminal window that just opened."
     echo "Follow it there: it may ask for your Mac password once. Video Kit opens in your browser when it's done (about 15 minutes)."
     exit 0
@@ -62,6 +71,17 @@ fi
 ok "Homebrew ready"
 command -v git >/dev/null 2>&1 && git --version >/dev/null 2>&1 || brew install git >/dev/null || stop "Couldn't install git. Paste the line again to retry."
 
+# Claude Code (writes your scripts and post copy). Anthropic's own installer; no password needed.
+export PATH="$HOME/.local/bin:$PATH"
+if ! command -v claude >/dev/null 2>&1; then
+  say "Installing Claude Code (free to install; you sign in with your Claude account later)"
+  CINST="$(mktemp)"
+  if curl -fsSL "${VIDEO_KIT_CLAUDE_INSTALLER:-https://claude.ai/install.sh}" -o "$CINST" && /bin/bash "$CINST" </dev/null >/dev/null 2>&1 \
+     && command -v claude >/dev/null 2>&1; then ok "Claude Code installed"
+  else echo "  ! Claude Code didn't install just now. Video Kit still works; the writing buttons will show you how to add it."; fi
+  rm -f "$CINST"
+else ok "Claude Code ready"; fi
+
 # 3. Download or update Video Kit
 if [ -d "$KIT/.git" ]; then
   say "Updating Video Kit in $KIT"
@@ -89,10 +109,10 @@ command -v node >/dev/null 2>&1 && [ -d node_modules/puppeteer-core ] \
 # 5. The Video Kit app (built on this Mac, so macOS doesn't block it)
 mkdir -p "$(dirname "$APP")"
 BUILD="$(mktemp -d)"; NEWAPP="$BUILD/Video Kit.app"   # osacompile makes an app bundle only for a .app path
-osacompile -o "$NEWAPP" -e "tell application \"Terminal\"
-  activate
-  do script \"exec \" & quoted form of \"$KIT/Video Kit.command\"
-end tell" >/dev/null 2>&1 && [ -d "$NEWAPP/Contents" ] || stop "Couldn't create the Video Kit app."
+# `open -a Terminal` (not "tell Terminal") so macOS never asks to let the app control Terminal.
+KIT_AS="${KIT//\\/\\\\}"; KIT_AS="${KIT_AS//\"/\\\"}"
+osacompile -o "$NEWAPP" -e "do shell script \"open -a Terminal \" & quoted form of \"$KIT_AS/Video Kit.command\"" >/dev/null 2>&1 \
+  && [ -d "$NEWAPP/Contents" ] || stop "Couldn't create the Video Kit app."
 [ -f config/app-icon.icns ] && cp config/app-icon.icns "$NEWAPP/Contents/Resources/applet.icns" \
   && codesign --force --sign - "$NEWAPP" >/dev/null 2>&1   # re-seal after swapping the icon
 rm -rf "$APP" && mv "$NEWAPP" "$APP" && touch "$APP"; rmdir "$BUILD" 2>/dev/null

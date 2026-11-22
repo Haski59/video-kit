@@ -5,6 +5,7 @@ cd "$(dirname "$0")" || exit 1
 echo "Video Kit"
 echo "---------"
 [ -x /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
+export PATH="$HOME/.local/bin:$PATH"   # where Claude Code's installer puts `claude`
 
 # Installed with the one-line installer (a git copy): fetch the latest version first. Best effort:
 # offline or slow internet just means today's run uses the version already here.
